@@ -21,7 +21,13 @@ var subjectName = "orders.>";
 Console.WriteLine("Publishing messages...");
 
 // ストリームの作成（初回のみ必要）
-var streamConfig = new StreamConfig(name: streamName, subjects: new[] { subjectName });
+var streamConfig = new StreamConfig(name: streamName, subjects: new[] { subjectName })
+{
+    Retention = StreamConfigRetention.Limits, // デフォルトの保持ポリシー
+    MaxMsgs = 1000,  // 最大メッセージ数
+    MaxBytes = 1024 * 1024, // 最大サイズ（1MB）
+    MaxAge = TimeSpan.FromHours(24) // 最大保持期間（24時間）
+};
 await js.CreateStreamAsync(streamConfig);
 Console.WriteLine($"Stream '{streamName}' created.");
 
@@ -29,7 +35,7 @@ Console.WriteLine($"Stream '{streamName}' created.");
 await js.PublishAsync(subject: "orders.new", data: new Order { Id = 1, Description = "Order 1" });
 await js.PublishAsync(subject: "orders.new", data: new Order { Id = 2, Description = "Order 2" });
 await js.PublishAsync(subject: "orders.new", data: new Order { Id = 3, Description = "Order 3" });
-Console.WriteLine("Messages published.");
+Console.WriteLine("3 Messages published.");
 
 //// -------------------------------------------
 //// ストリームの削除（基本的に本番運用では削除しない、別項目管理とか？？）
