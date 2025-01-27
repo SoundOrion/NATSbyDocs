@@ -1,36 +1,36 @@
-# NATS Client with JetStream in C#
+# C# での NATS Client と JetStream
 
-This repository demonstrates how to use NATS with JetStream in C# for reliable message streaming and processing. The example showcases creating a stream, publishing messages, processing them using consumers, and managing streams efficiently.
+このリポジトリでは、C# を使用して NATS と JetStream を利用する方法を示します。このサンプルでは、ストリームの作成、メッセージの発行、コンシューマによる処理、およびストリーム管理の手順を説明します。
 
-## Requirements
+## 必要条件
 
-- .NET 6.0 or later
-- [NATS.Net NuGet package](https://www.nuget.org/packages/NATS.Net)
+- .NET 6.0 以上
+- [NATS.Net NuGet パッケージ](https://www.nuget.org/packages/NATS.Net)
 
-## Installation
+## インストール
 
-Before running the example, install the required NuGet package:
+このサンプルを実行する前に、以下のコマンドで必要な NuGet パッケージをインストールしてください：
 
 ```bash
 dotnet add package NATS.Net
 ```
 
-Ensure that you have a NATS server running locally or accessible via a URL. By default, this example connects to `nats://127.0.0.1:4222`.
+また、NATS サーバーがローカル環境またはアクセス可能な URL 上で稼働していることを確認してください。デフォルトでは、このサンプルは `nats://127.0.0.1:4222` に接続します。
 
-## Running the Example
+## サンプルの実行
 
-1. Clone this repository and navigate to the project directory.
-2. Build and run the project:
+1. このリポジトリをクローンし、プロジェクトディレクトリに移動します。
+2. 以下のコマンドでビルドおよび実行します：
 
 ```bash
 dotnet run
 ```
 
-The script performs the following steps:
+スクリプトは以下の手順を実行します：
 
-### 1. Connect to the NATS Server
+### 1. NATS サーバーへの接続
 
-The example connects to the NATS server using a URL from the `NATS_URL` environment variable. If not set, it defaults to `nats://127.0.0.1:4222`:
+`NATS_URL` 環境変数から URL を取得して NATS サーバーに接続します。設定されていない場合は、デフォルトで `nats://127.0.0.1:4222` を使用します：
 
 ```csharp
 var url = Environment.GetEnvironmentVariable("NATS_URL") ?? "nats://127.0.0.1:4222";
@@ -38,26 +38,26 @@ await using var nc = new NatsClient(url);
 await nc.ConnectAsync();
 ```
 
-### 2. Create a JetStream Context
+### 2. JetStream コンテキストの作成
 
-A JetStream context is created for managing streams and consumers:
+ストリームやコンシューマを管理するための JetStream コンテキストを作成します：
 
 ```csharp
 var js = nc.CreateJetStreamContext();
 ```
 
-### 3. Define and Create a Stream
+### 3. ストリームの定義と作成
 
-A stream named `ORDERS` is created, with the subject pattern `orders.>`:
+`ORDERS` という名前のストリームを作成し、サブジェクトパターン `orders.>` を指定します：
 
 ```csharp
 var streamConfig = new StreamConfig(name: "ORDERS", subjects: new[] { "orders.>" });
 await js.CreateStreamAsync(streamConfig);
 ```
 
-### 4. Create a Durable Consumer
+### 4. Durable Consumer の作成
 
-A durable consumer named `durable_processor` is created to process messages:
+`durable_processor` という名前の Durable Consumer を作成し、メッセージを処理します：
 
 ```csharp
 var durableConfig = new ConsumerConfig
@@ -68,9 +68,9 @@ var durableConfig = new ConsumerConfig
 var consumer = await js.CreateOrUpdateConsumerAsync(stream: "ORDERS", durableConfig);
 ```
 
-### 5. Publish Messages
+### 5. メッセージの発行
 
-Messages are published to the stream under the subject `orders.new`:
+`orders.new` サブジェクトにメッセージを発行します：
 
 ```csharp
 await js.PublishAsync(subject: "orders.new", data: new Order { Id = 1, Description = "Order 1" });
@@ -78,9 +78,9 @@ await js.PublishAsync(subject: "orders.new", data: new Order { Id = 2, Descripti
 await js.PublishAsync(subject: "orders.new", data: new Order { Id = 3, Description = "Order 3" });
 ```
 
-### 6. Consume Messages
+### 6. メッセージの処理
 
-Messages are consumed using the `ConsumeAsync` method. The process runs for a maximum of 10 seconds before cancellation:
+`ConsumeAsync` メソッドを使用してメッセージを処理します。このプロセスは最大 10 秒間実行され、その後キャンセルされます：
 
 ```csharp
 var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -91,17 +91,17 @@ await foreach (var msg in consumer.ConsumeAsync<Order>().WithCancellation(cts.To
 }
 ```
 
-### 7. Delete the Stream (Optional)
+### 7. ストリームの削除（オプション）
 
-For cleanup, the stream is deleted. This step is optional and primarily for testing purposes:
+開発時のクリーンアップとしてストリームを削除します。本番環境では通常、このステップは不要です：
 
 ```csharp
 await js.DeleteStreamAsync("ORDERS");
 ```
 
-### 8. Define the Data Model
+### 8. データモデルの定義
 
-A simple data model is used for the orders:
+以下は注文用のシンプルなデータモデルです：
 
 ```csharp
 public record Order
@@ -114,20 +114,20 @@ public record Order
 }
 ```
 
-## Notes
+## 注意点
 
-- This example demonstrates durable consumers for reliable message processing. Messages are acknowledged (`AckAsync`) to indicate successful processing.
-- Alternative methods such as `NextAsync` (fetch a single message) and `FetchAsync` (batch processing) are commented out in the code for reference.
-- Deleting the stream is included for cleanup purposes during development but is not typically used in production environments.
+- このサンプルでは、信頼性の高いメッセージ処理のために Durable Consumer を使用しています。メッセージが正常に処理されたことを示すために `AckAsync` を呼び出します。
+- `NextAsync`（1 件のメッセージを取得）や `FetchAsync`（バッチ処理）などの代替メソッドはコード内でコメントアウトされています。
+- ストリームの削除は開発時のクリーンアップ用であり、本番環境では通常不要です。
 
-## Troubleshooting
+## トラブルシューティング
 
-- Ensure the NATS server is running and accessible.
-- Verify that the `NATS_URL` environment variable is set correctly, or use the default `nats://127.0.0.1:4222`.
-- Check NuGet package installation with `dotnet list package`.
+- NATS サーバーが稼働していることを確認してください。
+- `NATS_URL` 環境変数が正しく設定されているか、またはデフォルトの `nats://127.0.0.1:4222` を使用してください。
+- `dotnet list package` を使用して NuGet パッケージがインストールされているか確認してください。
 
-## References
+## 参考資料
 
-- [NATS Documentation](https://docs.nats.io/)
-- [NATS.Net GitHub Repository](https://github.com/nats-io/nats.net)
+- [NATS ドキュメント](https://docs.nats.io/)
+- [NATS.Net GitHub リポジトリ](https://github.com/nats-io/nats.net)
 
